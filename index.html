@@ -29,7 +29,7 @@
 <script type="text/javascript" >
 
 
-var sockect = io();
+var sockect = io('ws://localhost:3000');
 
 	$(function () {
     $(document).ready(function () {
@@ -200,10 +200,10 @@ sockect.on('newData' , function(data) {
 $('#light').click(function() {
 		sockect.emit('WeblightOn');
 		});
-		sockect.emit('addEdison', {user_id: 'user_id:17'});
+		sockect.emit('addEdison', {user_id: 'user_id:27'});
 $('#lightOff').click( function() {
 		sockect.emit('WeblightOff');
-		var data = {user_id: 'user_id:17' , data: {'sensor_id:15': {value: 15, date: t()}, 'sensor_id:16': {value: 343, date: t()}, 'sensor_id:14': {value: 344, date: t()} }};
+		var data = {user_id: 'user_id:27' , data: {'sensor_id:41': {value: 15, date: t()}, 'sensor_id:16': {value: 343, date: t()}, 'sensor_id:14': {value: 344, date: t()} }};
 		sockect.emit('updateData', data);
 		});
 </script>

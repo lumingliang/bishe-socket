@@ -1,6 +1,7 @@
 //var io = require('socket.io')(80);
 var app = require('express')();
 var http = require('http').Server(app);
+var kk = require('http');
 var io = require('socket.io')(http);
 var edisons = {};
 var users = {};
@@ -35,6 +36,7 @@ io.on('connection', function (socket) {
 	  users[user_id] = cache;
 	  //eval('(users.'+ user_id + '= cache)');
 	  //eval('users.' + user_id + '= "jjjj"');
+	  console.log('welcome a browser user!the users value is');
 	  console.log(users);
   });
 
@@ -45,10 +47,14 @@ io.on('connection', function (socket) {
   socket.on('updateData', function(data) {
 	  console.log(data);
 	  var user_id = data.user_id;
-	  console.log(edisons[user_id]);
-	  console.log(users);
+	  //console.log(edisons[user_id]);
+	  //console.log(users);
 //	  exit;
 	  edisons[user_id].data = data.data;
+	  if(users[user_id] == null) {
+		  console.log('your browser user has not login');
+		  return;
+	  }
 	  var online_sensors = users[user_id].online_sensors;
 	  console.log(users[user_id]);
 	  console.log(online_sensors);
@@ -76,7 +82,8 @@ io.on('connection', function (socket) {
 	  // 可以直接用数组形式动态增加键值对
 	  edisons[user_id] = cache;
 	  //edisons = eval(edisons);
-	  console.log(edisons[user_id]);
+	  console.log('welcome a edison user the edisons vlue is');
+	  console.log(edisons);
   });
 
   function updateData() {
@@ -117,6 +124,80 @@ io.on('connection', function (socket) {
 http.listen(3000, function(){
   console.log('listening on *:3000');
 });
+
+
+function isOwnEmpty(obj)
+{
+    for(var name in obj)
+    {
+        if(obj.hasOwnProperty(name))
+        {
+            return false;
+        }
+    }
+    return true;
+};
+
+// 不检测原型继承来的属性
+function isEmpty(obj)
+{
+    for (var name in obj)
+    {
+        return false;
+    }
+    return true;
+};
+	
+
+function saveData(data) {
+
+	data= JSON.stringify(data);  
+	console.log(data);
+
+var opt= {  
+            host : 'localhost',  
+            port : '80',  
+            path : '/iot/data',  
+            method : 'get',  
+            headers : {  
+				"Content-Type": 'application/json',  
+				"Content-Length": data.length  
+			}  
+        };  
+
+
+	var req = kk.request(opt, function( serverFeedback ) {
+		// if( serverFeedback.statusCode == 200 ) {
+			// console.log('ok');
+		// }
+			serverFeedback.on('data', function(data) {
+				console.log('data from server is'+ data);
+			});
+	});
+	
+	req.write(data+ "\n");
+	req.end();
+	req.on('error', function(e) {
+		console.log(e);
+	});
+}
+
+function saveAll() {
+	if(isEmpty( edisons )) {
+		console.log('no edison connect!');
+	}
+	for( key in edisons ) {
+		if(isEmpty(edisons[key].data) ) {
+			console.log('no edison data accept!');
+			return;
+		}
+		var d = {};
+		d[key] = edisons[key].data;
+		saveData( d );
+	}
+}
+
+//setInterval( saveAll, 5000 );
 
 
 
