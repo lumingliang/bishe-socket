@@ -197,7 +197,7 @@ function saveAll() {
 	}
 }
 
-//setInterval( saveAll, 5000 );
+setInterval( saveAll, 20000 );
 
 
 
