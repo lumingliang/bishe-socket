@@ -2,6 +2,7 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var kk = require('http');
+var qs = require('querystring');
 var io = require('socket.io')(http);
 var edisons = {};
 var users = {};
@@ -86,6 +87,15 @@ io.on('connection', function (socket) {
 	  console.log(edisons);
   });
 
+  socket.on('configEdison', function(data) {
+      console.log(data);
+      var data = processSerializeData(data);
+      console.log(data);
+      //  根据字符串生成时间 
+      // new Date('2016/04/22 22:33:44')
+      //console.log(qs.parse(data.sendEmailTime));
+  });
+
   function updateData() {
 	  socket.emit('updataData', {});
   } 
@@ -124,6 +134,21 @@ io.on('connection', function (socket) {
 http.listen(3000, function(){
   console.log('listening on *:3000');
 });
+
+function processSerializeData(data) {
+    var a = qs.parse(data);
+    return a;
+
+    // var cache = data.split('&');
+    // var a = [];
+    // for (var i in cache) {
+        // cache1 = cache[i].split('=');
+        // a[cache1[0]] = qs.parse(cache1[1]);
+    // }
+
+    // console.log(a);
+    // return a;
+}
 
 
 function isOwnEmpty(obj)
