@@ -2,6 +2,9 @@
   "name": "lumin",
   "version": "0.0.0",
   "description": "monitor for iot",
+  "script" : {
+      "start": "node server.js"
+  },
   "dependencies": {
     "express": "^4.10.2"
   }
