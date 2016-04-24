@@ -13,18 +13,12 @@ app.get('/', function(req, res){
 });
 
 io.on('connection', function (socket) {
+
   console.log('a user has connect');
-  //console.log(io.sockets.sockets);
-//  edisons[num] = socket;
   num++;
   console.log(num);
-  socket.on('message', function (msg) {
-	  console.log(msg);
-	  socket.emit('r', 'i have reseve');
 
 
-  });
-	  //eval('users.' + user_id + '= "jjjj"');
 
   // 这里开始是iot控制
   socket.on('addUsers', function(data) {
@@ -37,16 +31,16 @@ io.on('connection', function (socket) {
 	  users[user_id] = cache;
 	  //eval('(users.'+ user_id + '= cache)');
 	  //eval('users.' + user_id + '= "jjjj"');
-	  console.log('welcome a browser user!the users value is');
-	  console.log(users);
+	  console.log('welcome a browser user!the users value is'+user_id);
+	  //console.log(users);
   });
 
-  socket.on('error', function(data) {
-	  console.log(data);
+  socket.on('error', function(err) {
+	  console.log('now resive a error:' + err);
   });
 
   socket.on('updateData', function(data) {
-	  console.log(data);
+	  console.log('edison send data update, data is:'+data);
 	  var user_id = data.user_id;
 	  //console.log(edisons[user_id]);
 	  //console.log(users);
@@ -71,12 +65,10 @@ io.on('connection', function (socket) {
 	  users[user_id].socket.emit('updateData', updateData);
   });
 
-  var  computUpdateData = function() {
-	//  for (key in users.use)
-  }
+
 
   socket.on('addEdison', function(data) {
-	  console.log(data);
+	  console.log('addEdison now, data is:'+data);
 	  var user_id = data.user_id;
 	  var cache = { data : {}, socket: socket }
 	  //eval('edisons.' + user_id + '= cache');
@@ -88,66 +80,55 @@ io.on('connection', function (socket) {
   });
 
   socket.on('configEdison', function(data) {
+      console.log('browser try to config edison, data is:'+data);
+      data = processSerializeData(data);
       console.log(data);
-      var data = processSerializeData(data);
-      console.log(data);
+      clearInterval(saveDbHandle);
+
+      // 定时器单位为h
+      saveDbHandle = setInterval( saveAll, parseInt(data.db)*1000*60*60 );
+        //socket.emit('sendBackInfo', '设置成功！');
       //  根据字符串生成时间 
       // new Date('2016/04/22 22:33:44')
       //console.log(qs.parse(data.sendEmailTime));
+
+      if ( edisons[data.userId] == null ) {
+          console.log(data.userId);
+          console.log(users[data.userId]);
+          var id = data.userId;
+          //users[id].socket.emit('sendBackInfo', '操作失败:您的edison目前离线!请将edison连接后再重新操作!');
+          socket.emit('sendBackInfo', '操作失败:您的edison目前离线!请将edison连接后再重新操作！');
+      } else {
+          edisons[data.userId].socket.emit('configEdison', data);
+      }
   });
 
-  function updateData() {
-	  socket.emit('updataData', {});
-  } 
+socket.on('configSuccess', function(data) {
+    //socket.emit('sendBackInfo', '设置成功！');
+    console.log('config success, data user id is'+data.userId);
+    users[data.userId].socket.emit('sendBackInfo', '设置成功！');
+    //socket.emit('sendBackInfo', '设置成功！');
 
-  //setInterval(updateData, 5000);
-
-  socket.on('yy', function(data) {
-	  console.log(data);
-  });
-
-  socket.on('newMsg' ,function(data) {
-      socket.emit('message', 'your data is'+data);
-  });
-  socket.emit('message', 'welcome!');
-  socket.on('data' ,function(data) {
-      console.log(data);
-      io.emit('newData', data);
-  });
-
-  socket.on('WeblightOn', function() {
-      console.log('light on');
-	  edison[1].emit('hh', 'jj');
-  });
-
-  socket.on('WeblightOff' , function() {
-      console.log('light off');
-      io.emit('lightOff');
-  });
-
+});
+//socket.emit('sendBackInfo', '设置成功！');
 
   socket.on('disconnect', function () {
-	  console.log('disconnect');
+	  console.log('one had disconnect');
+      num--;
+      console.log('the online number is:'+num);
   });
+
 });
 
+
 http.listen(3000, function(){
-  console.log('listening on *:3000');
+  console.log('iot server is listening on *:3000');
 });
+
 
 function processSerializeData(data) {
     var a = qs.parse(data);
     return a;
-
-    // var cache = data.split('&');
-    // var a = [];
-    // for (var i in cache) {
-        // cache1 = cache[i].split('=');
-        // a[cache1[0]] = qs.parse(cache1[1]);
-    // }
-
-    // console.log(a);
-    // return a;
 }
 
 
@@ -161,7 +142,7 @@ function isOwnEmpty(obj)
         }
     }
     return true;
-};
+}
 
 // 不检测原型继承来的属性
 function isEmpty(obj)
@@ -171,7 +152,7 @@ function isEmpty(obj)
         return false;
     }
     return true;
-};
+}
 	
 
 function saveData(data) {
@@ -222,7 +203,8 @@ function saveAll() {
 	}
 }
 
-setInterval( saveAll, 20000 );
+// 默认20s向数据库存一次数据
+saveDbHandle = setInterval( saveAll, 20000 );
 
 
 
